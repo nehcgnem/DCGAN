@@ -7,6 +7,7 @@ import os
 import shutil
 import random
 import torch
+import argparse
 from PIL import Image
 import numpy as np
 import pandas as pd
@@ -72,6 +73,8 @@ class paintingDataset(Dataset):
         img = torch.load(img_name)
 
         return img
+
+
 
 class DiscriminatorNet(nn.Module):
     def __init__(self):
@@ -144,6 +147,14 @@ class GeneratorNet(torch.nn.Module):
         x = self.structure(x)
         return x
 
+
+
+def load_models(model_dir, model_name):
+    input_dir = '{}/{}'.format(model_dir, model_name)
+    the_model = GeneratorNet()
+    the_model.load_state_dict(torch.load(input_dir))
+    return the_model
+
 def noise(size):
     n = torch.randn(size, 100, 1, 1, device=cuda)
     return n
@@ -187,6 +198,17 @@ def train_generator(optimizer, fake_data):
     return error
 
 if __name__ == "__main__":
+    # optinal pretrained model load command 
+    parser = argparse.ArgumentParser(description='Optional pretrained model path and name')
+    parser.add_argument('--path', nargs='?', default = '',
+        help='directory of the generator and discriminator')
+    parser.add_argument('--gen', nargs='?',default = '',
+        help='the name of the generator ')
+    parser.add_argument('--dis', nargs='?',default = '',
+        help='the name of the discriminator ')
+    args = parser.parse_args()
+
+
 
 
     painting_dataset = paintingDataset(preprocesseddir)
@@ -198,12 +220,18 @@ if __name__ == "__main__":
         pin_memory=True
     )
     num_batches = len(data_loader)
+    if args.gen != '':
+        generator = load_models(args.path, args.gen)
+    else:
+        generator = GeneratorNet()
+        generator.cuda()
 
-    discriminator = DiscriminatorNet()
-    generator = GeneratorNet()
 
-    discriminator.cuda()
-    generator.cuda()
+    if args.dis != '':
+        discriminator = load_models(args.path, args.dis)
+    else:
+        discriminator = DiscriminatorNet()
+        discriminator.cuda()
 
     d_optimizer = optim.Adam(discriminator.parameters(), lr=0.0002, betas=(0.5, 0.999))
     g_optimizer = optim.Adam(generator.parameters(), lr=0.0002, betas=(0.5, 0.999))
@@ -247,3 +275,5 @@ if __name__ == "__main__":
                 logger.display_status(
                     epoch, num_epochs, n_batch, num_batches, d_error, g_error, d_pred_real, d_pred_fake
                 )
+            logger.save_models(generator, discriminator, epoch)
+
