@@ -275,5 +275,5 @@ if __name__ == "__main__":
                 logger.display_status(
                     epoch, num_epochs, n_batch, num_batches, d_error, g_error, d_pred_real, d_pred_fake
                 )
-            logger.save_models(generator, discriminator, epoch)
+        logger.save_models(generator, discriminator, epoch)
 
