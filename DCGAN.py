@@ -17,7 +17,7 @@ from torchvision import transforms, utils
 
 from utils import *
 
-image_info = pd.read_csv("dataset/train_info.csv") # not sure I need this metadata but whatever
+#image_info = pd.read_csv("dataset/train_info.csv") # not sure I need this metadata but whatever
 imgdir = "dataset/train_1/"
 preprocesseddir = "dataset/processed/"
 
@@ -149,11 +149,20 @@ class GeneratorNet(torch.nn.Module):
 
 
 
-def load_models(model_dir, model_name):
+def load_gen(model_dir, model_name):
     input_dir = '{}/{}'.format(model_dir, model_name)
     the_model = GeneratorNet()
     the_model.load_state_dict(torch.load(input_dir))
+    the_model.cuda()
     return the_model
+
+def load_dis(model_dir, model_name):
+    input_dir = '{}/{}'.format(model_dir, model_name)
+    the_model = DiscriminatorNet()
+    the_model.load_state_dict(torch.load(input_dir))
+    the_model.cuda()
+    return the_model
+
 
 def noise(size):
     n = torch.randn(size, 100, 1, 1, device=cuda)
@@ -221,14 +230,14 @@ if __name__ == "__main__":
     )
     num_batches = len(data_loader)
     if args.gen != '':
-        generator = load_models(args.path, args.gen)
+        generator = load_gen(args.path, args.gen)
     else:
         generator = GeneratorNet()
         generator.cuda()
 
 
     if args.dis != '':
-        discriminator = load_models(args.path, args.dis)
+        discriminator = load_dis(args.path, args.dis)
     else:
         discriminator = DiscriminatorNet()
         discriminator.cuda()
@@ -241,7 +250,7 @@ if __name__ == "__main__":
     num_test_samples = 16
     test_noise = noise(num_test_samples)
 
-    logger = Logger(model_name='DCGAN', data_name='PainterTraining1')
+    logger = Logger(model_name='DCGAN', data_name='PainterTraining_1_continue')
 
     num_epochs = 100
 
