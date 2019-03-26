@@ -1,2 +1,2 @@
 # DCGAN
-A DCGAN implementation with CUDA support 
+A Pytorch DCGAN implementation with CUDA support 
