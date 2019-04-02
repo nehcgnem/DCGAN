@@ -57,6 +57,14 @@ def preprocessData():
         torch.save(img, preprocesseddir + img_name + ".pt")
 
 
+def work():
+    from multiprocessing import Pool
+    pool = Pool()
+    pool.map(work, my_foo_obj_list)
+    pool.close()
+    pool.join()
+
+
 class paintingDataset(Dataset):
     def __init__(self, root_dir):
         self.root_dir = root_dir
@@ -166,10 +174,18 @@ class GeneratorNet(torch.nn.Module):
 
 
 
-def load_models(model_dir, model_name):
+def load_gen(model_dir, model_name):
     input_dir = '{}/{}'.format(model_dir, model_name)
     the_model = GeneratorNet()
     the_model.load_state_dict(torch.load(input_dir))
+    the_model.cuda()
+    return the_model
+
+def load_dis(model_dir, model_name):
+    input_dir = '{}/{}'.format(model_dir, model_name)
+    the_model = DiscriminatorNet()
+    the_model.load_state_dict(torch.load(input_dir))
+    the_model.cuda()
     return the_model
 
 def noise(size):
@@ -238,14 +254,14 @@ if __name__ == "__main__":
     )
     num_batches = len(data_loader)
     if args.gen != '':
-        generator = load_models(args.path, args.gen)
+        generator = load_gen(args.path, args.gen)
     else:
         generator = GeneratorNet()
         generator.cuda()
 
 
     if args.dis != '':
-        discriminator = load_models(args.path, args.dis)
+        discriminator = load_dis(args.path, args.dis)
     else:
         discriminator = DiscriminatorNet()
         discriminator.cuda()
@@ -293,6 +309,6 @@ if __name__ == "__main__":
                 logger.display_status(
                     epoch, num_epochs, n_batch, num_batches, d_error, g_error, d_pred_real, d_pred_fake
                 )
-                logger.save_models(generator, discriminator, epoch)
+        logger.save_models(generator, discriminator, epoch)
 
         epoch += 1
